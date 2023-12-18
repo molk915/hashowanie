@@ -1,4 +1,5 @@
 import hashlib
+import sys
 
 MD5_LENGTH = 32
 SHA3_512_LENGTH = 128
@@ -9,18 +10,39 @@ def file_to_list(file):
         return f.read().splitlines()
 
 def crack_hash(hashed_password, wordlist):
-    password_length = len(hashed_password)
-    if password_length == MD5_LENGTH:
-        format = "md5"
-    elif password_length == SHA3_512_LENGTH:
-        format = "sha3_512"
-    elif password_length == SHA_256_LENGTH:
-        format = "sha256"
-        crack_hash = hashlib.sha256
+    for password in wordlist:
+        if hashed_password == hashlib.md5(password.encode()).hexdigest() and len(hashed_password) == MD5_LENGTH:
+            return password, "md5"
+        elif hashed_password == hashlib.sha3_512(password.encode()).hexdigest() and len(hashed_password) == SHA3_512_LENGTH:
+            return password, "sha3_512"
+        elif hashed_password == hashlib.sha256(password.encode()).hexdigest() and len(hashed_password) == SHA_256_LENGTH:
+            return password, "sha256"
+    return None, None
+
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Użycie: python main.py <hash> <wordlist>")
+        sys.exit(1)
+
+    hash_value = sys.argv[1]
+    wordlist_file = sys.argv[2]
+
+    if len(hash_value) == MD5_LENGTH:
+        format_hash = "md5"
+    elif len(hash_value) == SHA3_512_LENGTH:
+        format_hash = "sha3_512"
+    elif len(hash_value) == SHA_256_LENGTH:
+        format_hash = "sha256"
     else:
         print("Nieznany format hasha")
+        sys.exit(1)
 
-wordlist = file_to_list("wordlist.txt")
-hash = "e10adc3949ba59abbe56e057f20f883e"  
-hash_type = "md5" 
-        
+    wordlist = file_to_list(wordlist_file)
+
+    cracked_password, cracked_format = crack_hash(hash_value, wordlist)
+
+    if cracked_password is not None:
+        print(f"Hasło znalezione: {cracked_password}")
+        print(f"Format hasha: {cracked_format}")
+    else:
+        print("Nie udało się złamać hasła.")
